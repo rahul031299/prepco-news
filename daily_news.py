@@ -56,4 +56,12 @@ if st.button("Generate Today's Update"):
                 active_model = "models/gemini-pro" # Safe default
                 try:
                     available_models = [m.name for m in genai.list_models()]
-                    if 'models/gem
+                    if 'models/gemini-1.5-flash' in available_models:
+                        active_model = 'models/gemini-1.5-flash'
+                except:
+                    pass 
+                
+                model = genai.GenerativeModel(active_model)
+
+                # 2. FETCH NEWS
+                q = topic if topic else "Business India Economy"
