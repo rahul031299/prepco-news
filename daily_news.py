@@ -17,6 +17,7 @@ today = datetime.date.today()
 day_name = today.strftime("%A") 
 weekday_num = today.weekday()   
 
+# Schedule Logic
 if weekday_num == 0 or weekday_num == 2:   # Mon, Wed
     current_mode = "Jargon Buster"
     icon = "💡"
@@ -35,6 +36,7 @@ st.info(f"Today's Auto-Mode: **{current_mode}**")
 
 # --- NEWS FUNCTION ---
 def get_google_news(query):
+    # RSS Feed for Business News India
     url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}&hl=en-IN&gl=IN&ceid=IN:en"
     return feedparser.parse(url).entries[:5]
 
@@ -47,66 +49,11 @@ if st.button("Generate Today's Update"):
     else:
         try:
             with st.spinner(f"Crafting {day_name}'s Update..."):
-                # 1. SETUP MODEL (The Fix)
+                # 1. SETUP MODEL (Auto-Healing)
                 genai.configure(api_key=api_key)
                 
-                # We try to find a working model automatically
-                active_model = "models/gemini-pro" # Fallback safe option
+                # Try to find a working model
+                active_model = "models/gemini-pro" # Safe default
                 try:
                     available_models = [m.name for m in genai.list_models()]
-                    if 'models/gemini-1.5-flash' in available_models:
-                        active_model = 'models/gemini-1.5-flash'
-                except:
-                    pass # If list fails, we stick to gemini-pro
-                
-                # st.write(f"Using: {active_model}") # Uncomment to debug
-                model = genai.GenerativeModel(active_model)
-
-                # 2. FETCH NEWS
-                q = topic if topic else "Business India Economy"
-                items = get_google_news(q)
-                context = "\n".join([f"{i+1}. {x.title} ({x.link})" for i, x in enumerate(items)])
-
-                # 3. DEFINE PROMPT
-                prompt_extra = ""
-                if current_mode == "Jargon Buster":
-                    prompt_extra = "Add a '💡 Word of the Day' section. Pick a term from the news. Define it in 1 simple line."
-                elif current_mode == "Guesstimate Drill":
-                    prompt_extra = "Add a '🧠 Daily Guesstimate' section related to the news. Give a 1-line hint formula. No answer."
-                elif current_mode == "Sector Spotlight":
-                    prompt_extra = "Add a '🏭 Sector Spotlight' section on the industry in the news. List 1 Tailwind, 1 Headwind, 2 Top Players."
-
-                full_prompt = f"""
-                Act as an IIM Mentor. Create a WhatsApp update for {day_name}, {today}.
-                
-                NEWS CONTEXT:
-                {context}
-                
-                TASK:
-                1. Pick the ONE most critical story.
-                2. Summarize (1 sentence).
-                3. Two Business Implications (MBA Angle).
-                4. One Interview Question.
-                5. {prompt_extra}
-                
-                OUTPUT FORMAT:
-                ☀️ *PrepCo Morning Edge – {today.strftime('%d %b')}*
-                
-                📰 *THE HEADLINE:* [Summary]
-                
-                💼 *THE MBA ANGLE:*
-                • [Point 1]
-                • [Point 2]
-                
-                🎤 *THE INTERVIEW GRILL:* "[Question]"
-                
-                🔗 *Read More:* [Link]
-                
-                --------------------------------
-                
-                [Add-on Section Here]
-                """
-
-                # 4. GENERATE
-                response = model.generate_content(full_prompt)
-                st.code(response.text, language="markdown")
+                    if 'models/gem
