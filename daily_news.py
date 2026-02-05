@@ -91,29 +91,34 @@ if st.button("Generate Today's Update"):
                 
                 TASK:
                 1. Pick the ONE most critical story.
-                2. Summarize (1 sentence).
-                3. Two Business Implications (MBA Angle).
+                2. Summarize (1 short sentence).
+                3. Two Business Implications (MBA Angle). Keep them punchy.
                 4. One Interview Question.
                 5. {prompt_extra}
                 
-                OUTPUT FORMAT:
-                ☀️ *PrepCo Morning Edge – {today.strftime('%d %b')}*
+                STRICT OUTPUT FORMAT (Use the horizontal lines exactly):
                 
-                📰 *THE HEADLINE:* [Summary]
+                ☀️ *PrepCo Morning Edge* | {today.strftime('%d %b')}
+                *⏱️ Read time: 45s*
                 
-                💼 *THE MBA ANGLE:*
-                • [Point 1]
-                • [Point 2]
+                ━━━━━━━━━━━━━━
+                📰 *THE HEADLINE*
+                *[Summary in 1 Bold Sentence]*
                 
-                🎤 *THE INTERVIEW GRILL:* "[Question]"
+                ━━━━━━━━━━━━━━
+                💼 *THE MBA ANGLE*
                 
-                🔗 *Read More:* [Link]
+                🔸 *[Implication 1 Keyword]:* [Short explanation, max 10 words]
                 
-                --------------------------------
+                🔸 *[Implication 2 Keyword]:* [Short explanation, max 10 words]
                 
-                [Add-on Section Here]
+                ━━━━━━━━━━━━━━
+                🎤 *INTERVIEW GRILL*
+                "[Question]"
+                
+                ━━━━━━━━━━━━━━
+                [Add-on Section Here (Keep it short)]
                 """
-
                 # 4. GENERATE
                 response = model.generate_content(full_prompt)
                 st.code(response.text, language="markdown")
@@ -122,3 +127,4 @@ if st.button("Generate Today's Update"):
         except Exception as e:
             st.error(f"Error: {e}")
             st.warning("If this fails, try running 'pip install --upgrade google-generativeai' in your terminal.")
+
