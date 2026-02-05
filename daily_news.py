@@ -49,18 +49,24 @@ if st.button("Generate Today's Update"):
     else:
         try:
             with st.spinner(f"Crafting {day_name}'s Update..."):
-                # 1. SETUP MODEL (Auto-Healing)
+                # 1. SETUP MODEL (The Universal Fix)
                 genai.configure(api_key=api_key)
                 
-                # Try to find a working model
-                active_model = "models/gemini-pro" # Safe default
+                # Dynamic Model Finder: We ask Google "What can I use?"
+                active_model = "models/gemini-1.5-flash" # Default target
                 try:
-                    available_models = [m.name for m in genai.list_models()]
-                    if 'models/gemini-1.5-flash' in available_models:
+                    all_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                    # Priority order: Flash -> Pro -> Anything else
+                    if 'models/gemini-1.5-flash' in all_models:
                         active_model = 'models/gemini-1.5-flash'
-                except:
-                    pass 
+                    elif 'models/gemini-pro' in all_models:
+                        active_model = 'models/gemini-pro'
+                    elif all_models:
+                        active_model = all_models[0] # Use whatever is available
+                except Exception as e:
+                    pass # If listing fails, stick to default
                 
+                # st.success(f"Connected using: {active_model}") # Uncomment to see which model picked
                 model = genai.GenerativeModel(active_model)
 
                 # 2. FETCH NEWS
