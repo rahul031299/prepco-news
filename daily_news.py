@@ -3,14 +3,20 @@ import google.generativeai as genai
 import feedparser
 import datetime
 
+# --- PAGE CONFIG ---
 st.set_page_config(page_title="Auto-News Generator", page_icon="🤖")
+
+# --- SIDEBAR: API KEY ---
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+else:
+    api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 # --- AUTO-DETECT DAY & ADD-ON ---
 today = datetime.date.today()
-day_name = today.strftime("%A") # e.g., "Monday"
-weekday_num = today.weekday()   # 0=Mon, 1=Tue...
+day_name = today.strftime("%A") 
+weekday_num = today.weekday()   
 
-# THE SCHEDULE LOGIC
 if weekday_num == 0 or weekday_num == 2:   # Mon, Wed
     current_mode = "Jargon Buster"
     icon = "💡"
@@ -24,20 +30,16 @@ else:                                      # Sat, Sun
     current_mode = "Standard News"
     icon = "📰"
 
-# --- UI ---
 st.title(f"{icon} Daily Update: {day_name}")
 st.info(f"Today's Auto-Mode: **{current_mode}**")
 
-if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
-else:
-    api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
-
-topic = st.text_input("Specific Topic (Optional)", placeholder="Leave blank for Top Stories")
-
+# --- NEWS FUNCTION ---
 def get_google_news(query):
     url = f"https://news.google.com/rss/search?q={query.replace(' ', '+')}&hl=en-IN&gl=IN&ceid=IN:en"
     return feedparser.parse(url).entries[:5]
+
+# --- MAIN APP ---
+topic = st.text_input("Specific Topic (Optional)", placeholder="Leave blank for Top Stories")
 
 if st.button("Generate Today's Update"):
     if not api_key:
@@ -45,25 +47,34 @@ if st.button("Generate Today's Update"):
     else:
         try:
             with st.spinner(f"Crafting {day_name}'s Update..."):
-                # 1. Fetch News
+                # 1. SETUP MODEL (The Fix)
+                genai.configure(api_key=api_key)
+                
+                # We try to find a working model automatically
+                active_model = "models/gemini-pro" # Fallback safe option
+                try:
+                    available_models = [m.name for m in genai.list_models()]
+                    if 'models/gemini-1.5-flash' in available_models:
+                        active_model = 'models/gemini-1.5-flash'
+                except:
+                    pass # If list fails, we stick to gemini-pro
+                
+                # st.write(f"Using: {active_model}") # Uncomment to debug
+                model = genai.GenerativeModel(active_model)
+
+                # 2. FETCH NEWS
                 q = topic if topic else "Business India Economy"
                 items = get_google_news(q)
                 context = "\n".join([f"{i+1}. {x.title} ({x.link})" for i, x in enumerate(items)])
 
-                # 2. Build Prompt based on Day
+                # 3. DEFINE PROMPT
                 prompt_extra = ""
                 if current_mode == "Jargon Buster":
-                    prompt_extra = """
-                    Add a '💡 Word of the Day' section. Pick a term from the news. Define it in 1 simple line.
-                    """
+                    prompt_extra = "Add a '💡 Word of the Day' section. Pick a term from the news. Define it in 1 simple line."
                 elif current_mode == "Guesstimate Drill":
-                    prompt_extra = """
-                    Add a '🧠 Daily Guesstimate' section related to the news topic. Give a 1-line hint formula. No answer.
-                    """
+                    prompt_extra = "Add a '🧠 Daily Guesstimate' section related to the news. Give a 1-line hint formula. No answer."
                 elif current_mode == "Sector Spotlight":
-                    prompt_extra = """
-                    Add a '🏭 Sector Spotlight' section on the industry in the news. List 1 Tailwind, 1 Headwind, 2 Top Players.
-                    """
+                    prompt_extra = "Add a '🏭 Sector Spotlight' section on the industry in the news. List 1 Tailwind, 1 Headwind, 2 Top Players."
 
                 full_prompt = f"""
                 Act as an IIM Mentor. Create a WhatsApp update for {day_name}, {today}.
@@ -96,13 +107,6 @@ if st.button("Generate Today's Update"):
                 [Add-on Section Here]
                 """
 
-                # 3. Generate
-                genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # 4. GENERATE
                 response = model.generate_content(full_prompt)
-                
                 st.code(response.text, language="markdown")
-                st.success("✅ Ready to send!")
-
-        except Exception as e:
-            st.error(f"Error: {e}")
