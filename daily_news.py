@@ -103,7 +103,7 @@ if st.button("Generate Today's Update"):
                 
                 ━━━━━━━━━━━━━━
                 📰 *THE HEADLINE*
-                *[Summary in 1 Sentence]*
+                *[Summary in 1 Bold Sentence]*
                 
                 ━━━━━━━━━━━━━━
                 💼 *THE MBA ANGLE*
@@ -127,6 +127,7 @@ if st.button("Generate Today's Update"):
         except Exception as e:
             st.error(f"Error: {e}")
             st.warning("If this fails, try running 'pip install --upgrade google-generativeai' in your terminal.")
+
 
 
 
