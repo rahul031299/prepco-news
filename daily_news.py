@@ -4,7 +4,7 @@ import feedparser
 import datetime
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="Auto-News Generator", page_icon="🤖")
+st.set_page_config(page_title="News Generator", page_icon="🤖")
 
 # --- SIDEBAR: API KEY ---
 if "GEMINI_API_KEY" in st.secrets:
